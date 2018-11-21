@@ -521,6 +521,7 @@ struct mm_struct {
 	bool tlb_flush_batched;
 #endif
 	struct uprobes_state uprobes_state;
+	struct work_struct async_put_work;
 #ifdef CONFIG_X86_INTEL_MPX
 	/* address of the bounds directory */
 	void __user *bd_addr;
@@ -532,7 +533,6 @@ struct mm_struct {
 	int app_setting;
 #endif
 
-	struct work_struct async_put_work;
 };
 
 static inline void mm_init_cpumask(struct mm_struct *mm)

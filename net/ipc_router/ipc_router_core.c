@@ -4293,6 +4293,7 @@ void msm_ipc_router_xprt_notify(struct msm_ipc_router_xprt *xprt,
 			}
 		}
 	}
+
 	mutex_unlock(&xprt_info->rx_lock_lhb2);
 	queue_work(xprt_info->workqueue, &xprt_info->read_data);
 }
@@ -4432,3 +4433,4 @@ static int msm_ipc_router_init(void)
 module_init(msm_ipc_router_init);
 MODULE_DESCRIPTION("MSM IPC Router");
 MODULE_LICENSE("GPL v2");
+
