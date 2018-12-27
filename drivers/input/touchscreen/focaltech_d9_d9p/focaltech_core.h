@@ -251,6 +251,4 @@ int fts_ex_mode_recovery(struct i2c_client *client);
 void fts_irq_disable(void);
 void fts_irq_enable(void);
 
-void fts_gesture_enable(bool enable);
-
 #endif /* __LINUX_FOCALTECH_CORE_H__ */

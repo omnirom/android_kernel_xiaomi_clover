@@ -46,12 +46,6 @@ int LCM_effect[4] = {0x2,0xf0,0xf00,0xf000};
 #endif
 
 DEFINE_LED_TRIGGER(bl_led_trigger);
-static bool mdss_panel_reset_skip;
-
-void mdss_panel_reset_skip_enable(bool enable)
-{
-	mdss_panel_reset_skip = enable;
-}
 
 void mdss_dsi_panel_pwm_cfg(struct mdss_dsi_ctrl_pdata *ctrl)
 {
@@ -423,17 +417,6 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 				panel_data);
 
 	pinfo = &(ctrl_pdata->panel_data.panel_info);
-
-	/* For TDDI ddic panel, LCD shares reset pin with touch.
-	 * If gesture wakeup feature is enabled, the reset pin
-	 * should be controlled by touch. In this case, reset pin
-	 * would keep high state when panel is off. Meanwhile,
-	 * reset action would be done by touch when panel is on.
-	 */
-	if (mdss_panel_reset_skip && !pinfo->panel_dead) {
-		pr_info("%s: panel reset skip\n", __func__);
-		return rc;
-	}
 	if ((mdss_dsi_is_right_ctrl(ctrl_pdata) &&
 		mdss_dsi_is_hw_config_split(ctrl_pdata->shared_data)) ||
 			pinfo->is_dba_panel) {

@@ -70,8 +70,7 @@ static int boot_into_ffbm;
 * Global variable or extern global variabls/functions
 *****************************************************************************/
 struct fts_ts_data *fts_data;
-static bool gesture_enabled_when_resume;
-static bool gesture_disabled_when_resume;
+
 /*****************************************************************************
 * Static function prototypes
 *****************************************************************************/
@@ -83,10 +82,7 @@ static int fts_ts_resume(struct device *dev);
 char fts_tpdname[60] = {0};
 char fts_color[20] = {0};
 #endif
-#ifdef CONFIG_FB
-extern void mdss_panel_reset_skip_enable(bool enable);
-extern bool mdss_panel_is_prim(void *fbinfo);
-#endif
+
 
 /*****************************************************************************
 *  Name: fts_wait_tp_to_valid
@@ -1253,30 +1249,15 @@ static int fb_notifier_callback(struct notifier_block *self,
 	struct fts_ts_data *fts_data =
 		container_of(self, struct fts_ts_data, fb_notif);
 
-	if (evdata && evdata->data && mdss_panel_is_prim(evdata->info)
-							&& fts_data && fts_data->client) {
+	if (evdata && evdata->data && event == FB_EVENT_BLANK &&
+		fts_data && fts_data->client) {
 		blank = evdata->data;
+		if (*blank == FB_BLANK_UNBLANK) {
+			queue_work(fts_data->ts_workqueue, &fts_data->resume_work);
 
-		FTS_INFO("repsonse notifier, enter touch suspend");
-		if (event == FB_EARLY_EVENT_BLANK) {
-			if (*blank == FB_BLANK_POWERDOWN) {
-				mdss_panel_reset_skip_enable(true);
-				gesture_enabled_when_resume = true;
-				gesture_disabled_when_resume = false;
-			}
-		} else if (event == FB_EVENT_BLANK) {
-			if (*blank == FB_BLANK_UNBLANK) {
-				if (!gesture_disabled_when_resume && gesture_enabled_when_resume) {
-					FTS_INFO("Enter gesture wakeup");
-					mdss_panel_reset_skip_enable(false);
-				}
-				queue_work(fts_data->ts_workqueue, &fts_data->resume_work);
-				gesture_enabled_when_resume = false;
-				gesture_disabled_when_resume = true;
-			} else if (*blank == FB_BLANK_POWERDOWN) {
-				fts_ts_suspend(&fts_data->client->dev);
-			}
 		}
+		else if (*blank == FB_BLANK_POWERDOWN)
+			fts_ts_suspend(&fts_data->client->dev);
 	}
 
 	return 0;
@@ -1595,8 +1576,6 @@ static int fts_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
 		goto err_irq_req;
 	}
 
-	gesture_enabled_when_resume = false;
-
 #if FTS_APK_NODE_EN
 	ret = fts_create_apk_debug_channel(ts_data);
 	if (ret) {
@@ -1860,14 +1839,10 @@ static int fts_ts_resume(struct device *dev)
 
 #if FTS_GESTURE_EN
 	fts_irq_enable();
-	if ((fts_gesture_resume(ts_data->client) == 0 || !gesture_disabled_when_resume)
-							&& gesture_enabled_when_resume) {
-		FTS_INFO("gesture_enabled_when_resume, do gesture resume");
+
+	if (fts_gesture_resume(ts_data->client) == 0) {
 		ts_data->suspended = false;
 		return 0;
-	} else {
-		FTS_ERROR("gesture resume process failed!");
-		FTS_INFO("Set tp state suspended false!");
 	}
 #endif
 
