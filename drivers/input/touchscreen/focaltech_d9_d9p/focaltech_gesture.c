@@ -143,8 +143,8 @@ static ssize_t fts_gesture_show(struct device *dev, struct device_attribute *att
 
 	mutex_lock(&input_dev->mutex);
 	fts_i2c_read_reg(client, FTS_REG_GESTURE_EN, &val);
-	count = snprintf(buf, PAGE_SIZE, "Gesture Mode: %s\n", fts_gesture_data.mode ? "On" : "Off");
-	count += snprintf(buf + count, PAGE_SIZE, "Reg(0xD0) = %d\n", val);
+	count = snprintf(buf, PAGE_SIZE, "%d\n", fts_gesture_data.mode ? 1 : 0);
+	//count += snprintf(buf + count, PAGE_SIZE, "Reg(0xD0) = %d\n", val);
 	mutex_unlock(&input_dev->mutex);
 
 	return count;
