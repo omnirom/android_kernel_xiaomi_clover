@@ -1417,7 +1417,7 @@ const struct file_operations proc_pagemap_operations = {
 #endif /* CONFIG_PROC_PAGE_MONITOR */
 
 #ifdef CONFIG_PROCESS_RECLAIM
-int reclaim_pte_range(pmd_t *pmd, unsigned long addr,
+static int reclaim_pte_range(pmd_t *pmd, unsigned long addr,
 				unsigned long end, struct mm_walk *walk)
 {
 	struct reclaim_param *rp = walk->private;
@@ -1444,9 +1444,6 @@ cont:
 		if (!page)
 			continue;
 
-		if (page_mapcount(page) != 1)
-			continue;
-
 		if (isolate_lru_page(page))
 			continue;
 
@@ -1469,7 +1466,7 @@ cont:
 		goto cont;
 
 	cond_resched();
-	return (rp->nr_to_reclaim == 0) ? -EPIPE : 0;
+	return 0;
 }
 
 enum reclaim_type {
@@ -1540,7 +1537,6 @@ static ssize_t reclaim_write(struct file *file, const char __user *buf,
 	unsigned long start = 0;
 	unsigned long end = 0;
 	struct reclaim_param rp;
-	int ret;
 
 	memset(buffer, 0, sizeof(buffer));
 	if (count > sizeof(buffer) - 1)
@@ -1602,7 +1598,7 @@ static ssize_t reclaim_write(struct file *file, const char __user *buf,
 	reclaim_walk.mm = mm;
 	reclaim_walk.pmd_entry = reclaim_pte_range;
 
-	rp.nr_to_reclaim = INT_MAX;
+	rp.nr_to_reclaim = ~0;
 	rp.nr_reclaimed = 0;
 	reclaim_walk.private = &rp;
 
@@ -1616,11 +1612,9 @@ static ssize_t reclaim_write(struct file *file, const char __user *buf,
 				continue;
 
 			rp.vma = vma;
-			ret = walk_page_range(max(vma->vm_start, start),
+			walk_page_range(max(vma->vm_start, start),
 					min(vma->vm_end, end),
 					&reclaim_walk);
-			if (ret)
-				break;
 			vma = vma->vm_next;
 		}
 	} else {
@@ -1635,10 +1629,8 @@ static ssize_t reclaim_write(struct file *file, const char __user *buf,
 				continue;
 
 			rp.vma = vma;
-			ret = walk_page_range(vma->vm_start, vma->vm_end,
+			walk_page_range(vma->vm_start, vma->vm_end,
 				&reclaim_walk);
-			if (ret)
-				break;
 		}
 	}
 
