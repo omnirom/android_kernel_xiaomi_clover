@@ -107,6 +107,7 @@
 		pinctrl-names = "i2c_active", "i2c_sleep", "i2c_bitbang";
 		pinctrl-0 = <&i2c_3_active>;
 		pinctrl-1 = <&i2c_3_sleep>;
+		pinctrl-2 = <&i2c_3_bitbang>;
 		status = "okay";
 	};
 
@@ -236,6 +237,7 @@
 		pinctrl-names = "i2c_active", "i2c_sleep", "i2c_bitbang";
 		pinctrl-0 = <&i2c_8_active>;
 		pinctrl-1 = <&i2c_8_sleep>;
+		pinctrl-2 = <&i2c_8_bitbang>;
 		status = "okay";
 	};
 
